@@ -10,7 +10,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 
-#include "Thirdparty/DLib/FileFunctions.h"
+#include "../Thirdparty/DLib/FileFunctions.h"
 
 
 using namespace std;
