@@ -1,10 +1,12 @@
-#include<iostream>
-#include<ros/ros.h>
-#include<rosbag/bag.h>
-#include<rosbag/view.h>
-#include<sensor_msgs/Image.h>
-#include<std_msgs/Time.h>
-#include<std_msgs/Header.h>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <ros/ros.h>
+#include <rosbag/bag.h>
+#include <rosbag/view.h>
+#include <sensor_msgs/Image.h>
+#include <std_msgs/Time.h>
+#include <std_msgs/Header.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
@@ -33,31 +35,37 @@ int main(int argc, char **argv)
 
     cout << "Images: " << filenames.size() << endl;
 
-    // Frequency
-    double freq = atof(argv[3]);
-
     // Output bag
-    rosbag::Bag bag_out(argv[4],rosbag::bagmode::Write);
+    rosbag::Bag bag_out(argv[3],rosbag::bagmode::Write);
 
-    ros::Time t = ros::Time::now();
+    string time_file_name;
+    time_file_name = argv[4];
 
-    const float T=1.0f/freq;
-    ros::Duration d(T);
-
-    for(size_t i=0;i<filenames.size();i++)
-    {
-        if(!ros::ok())
-            break;
-
-        cv::Mat im = cv::imread(filenames[i],CV_LOAD_IMAGE_COLOR);
-        cv_bridge::CvImage cvImage;
-        cvImage.image = im;
-        cvImage.encoding = sensor_msgs::image_encodings::RGB8;
-        cvImage.header.stamp = t;
-        bag_out.write("/camera/image_raw",ros::Time(t),cvImage.toImageMsg());
-        t+=d;
-        cout << i << " / " << filenames.size() << endl;
-    }
+    ifstream time_file;
+    time_file.open(time_file_name.c_str());
+    string line;
+	if (time_file.is_open()) {
+		size_t i=0;
+	    while ( getline (time_file,line) )
+	    {
+	        if(!ros::ok())
+	            break;
+	        double time_stamp = stod(line);
+	        if(i==0) {
+	        	time_stamp = 0.000000001; 
+	        } 
+	        ros::Time t(time_stamp);
+	        cv::Mat im = cv::imread(filenames[i],CV_LOAD_IMAGE_COLOR);
+	        cv_bridge::CvImage cvImage;
+	        cvImage.image = im;
+	        cvImage.encoding = sensor_msgs::image_encodings::RGB8;
+	        cvImage.header.stamp = t;
+	        bag_out.write("/camera/image_raw",ros::Time(t),cvImage.toImageMsg());
+	        cout << i << " / " << filenames.size() << endl;
+	        i++;
+	    }
+	    time_file.close();
+	}
 
     bag_out.close();
 
